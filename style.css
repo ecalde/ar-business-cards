@@ -13,6 +13,26 @@ a-scene, canvas {
   height: 100% !important;
 }
 
+/* MindAR camera video element (Safari/iOS) */
+video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  z-index: 0 !important;
+}
+
+/* A-Frame canvas should render above the video */
+canvas {
+  z-index: 1 !important;
+}
+
+/* UI should be above everything */
+#ui {
+  z-index: 10 !important;
+}
+
 #ui {
   position: fixed;
   inset: 0;
