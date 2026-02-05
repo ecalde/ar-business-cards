@@ -1,0 +1,8 @@
+.DS_Store
+.venv/
+
+# Don’t commit big local test videos
+assets/videos/*.mp4
+
+# Generated QR codes (optional to keep out of repo)
+qrs/
