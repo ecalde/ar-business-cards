@@ -1,0 +1,27 @@
+{
+  "card_001": {
+    "instagramUrl": "https://www.instagram.com/edwinspira/",
+    "layers": [
+      {
+        "type": "image",
+        "src": "assets/overlays/placeholder.png",
+        "pos": [0.0, 0.03, 0.12],   
+        "scale": [0.35, 0.20, 1.0],
+        "anim": { "float": 0.01, "spinY": 10 }
+      }
+    ]
+  },
+
+  "card_002": {
+    "instagramUrl": "https://www.instagram.com/edwinspira/",
+    "layers": [
+      {
+        "type": "video",
+        "src": "assets/videos/placeholder.mp4",
+        "pos": [0.0, 0.03, 0.12],
+        "scale": [0.38, 0.22, 1.0],
+        "anim": { "float": 0.006 }
+      }
+    ]
+  }
+}

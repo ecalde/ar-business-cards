@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edwin AR Cards</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+  <!-- MindAR (A-Frame integration) -->
+  <!-- Using jsDelivr CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+</head>
+
+<body>
+  <!-- Simple UI overlay -->
+  <div id="ui">
+    <div class="panel">
+      <div class="title">AR Business Card</div>
+      <div id="status" class="status">Loading…</div>
+
+      <div class="row">
+        <button id="startBtn">Start AR</button>
+        <button id="stopBtn" disabled>Stop</button>
+      </div>
+
+      <div class="row">
+        <button id="videoBtn" class="secondary" style="display:none;">Play Video</button>
+        <a id="igBtn" class="secondary" href="https://instagram.com/" target="_blank" rel="noopener">Instagram</a>
+      </div>
+
+      <div class="hint">
+        Tip: Point your camera at the “EC” logo in the center of the card.
+      </div>
+    </div>
+  </div>
+
+  <!-- AR Scene -->
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiScanning: yes; uiLoading: yes;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights: true"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-assets id="assets"></a-assets>
+
+    <!-- Camera -->
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- Anchor for EC logo target (targetIndex 0) -->
+    <a-entity id="anchor" mindar-image-target="targetIndex: 0"></a-entity>
+
+    <!-- Light (helps GLB models look better) -->
+    <a-entity light="type: ambient; intensity: 0.8"></a-entity>
+    <a-entity light="type: directional; intensity: 0.6" position="1 2 1"></a-entity>
+  </a-scene>
+
+  <script src="main.js"></script>
+</body>
+</html>
