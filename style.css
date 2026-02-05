@@ -1,8 +1,16 @@
 html, body {
   margin: 0;
   height: 100%;
-  background: #000;
+  background: transparent;
+  overflow: hidden;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
+a-scene, canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 #ui {
