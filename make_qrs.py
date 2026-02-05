@@ -1,7 +1,7 @@
 from pathlib import Path
 import qrcode
 
-BASE_URL = "https://github.com/ecalde/ar-business-cards/"
+BASE_URL = "https://ecalde.github.io/ar-business-cards/"
 OUT_DIR = Path("qrs")
 OUT_DIR.mkdir(exist_ok=True)
 
