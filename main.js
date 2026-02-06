@@ -443,6 +443,10 @@ function showVideoButtonIfNeeded(layers) {
 
 async function main() {
   const cardId = getCardIdFromUrl();
+  console.log("URL:", window.location.href);
+  console.log("cardId:", cardId);
+  setStatus(`URL id=${cardId}`);
+
   setStatus(`Card: ${cardId} — loading config…`);
 
   const config = await loadJSON("cards.json");
