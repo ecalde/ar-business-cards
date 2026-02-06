@@ -588,9 +588,15 @@ async function main() {
   });
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+function boot() {
   main().catch(err => {
     console.error(err);
     setStatus(`Error: ${err.message}`);
   });
-});
+}
+
+if (document.readyState === "loading") {
+  window.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}
