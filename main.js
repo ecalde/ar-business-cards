@@ -362,8 +362,35 @@ function hideAllOverlaysAndReset(anchor) {
 
 function showScene(sceneEl, show) {
   // Hide/show the WebGL output to prevent “frozen overlay” frames
+  const aCanvas = document.querySelector(".a-canvas"); // A-Frame wrapper
+  const canvas =
+    (sceneEl?.renderer?.domElement) ||
+    document.querySelector("canvas.a-canvas") ||
+    document.querySelector("canvas");
+
+  if (aCanvas) aCanvas.style.display = show ? "block" : "none";
+  if (canvas) canvas.style.display = show ? "block" : "none";
+
+  // Keep scene itself consistent too (not strictly required, but fine)
   sceneEl.style.display = show ? "block" : "none";
+
+  // When hiding, force-clear the WebGL buffer so Safari doesn't “cache” the last frame
+  if (!show && canvas) {
+    try {
+      const gl =
+        canvas.getContext("webgl2", { preserveDrawingBuffer: false }) ||
+        canvas.getContext("webgl", { preserveDrawingBuffer: false });
+
+      if (gl) {
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
 }
+
 
 function showVideoButtonIfNeeded(layers) {
   const needsVideo = layers.some(l => l.type === "video");
@@ -440,6 +467,10 @@ async function main() {
   }
 
   setStatus(`Ready. Tap “Start AR”, then point at the EC logo.`);
+  showScene(sceneEl, false);
+  hideAllOverlaysAndReset(anchor);
+  setAnchorVisible(anchor, false);
+
 
   startBtn.addEventListener("click", async () => {
     setStatus("Starting AR…");
@@ -483,6 +514,7 @@ async function main() {
 
     // 3) Hide the entire WebGL canvas output so no frozen frame remains
     showScene(sceneEl, false);
+    setTimeout(() => showScene(sceneEl, false), 100);
 
     startBtn.disabled = false;
     stopBtn.disabled = true;
