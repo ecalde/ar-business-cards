@@ -3,8 +3,8 @@
     "instagramUrl": "https://www.instagram.com/edwinspira/",
     "layers": [
       {
-        "type": "image",
-        "src": "assets/overlays/placeholder.png",
+        "type": "gif",
+        "src": "assets/overlays/placeholder.gif",
         "pos": [0.0, 0.0, 0.1],   
         "scale": [0.7, 0.4, 1.0],
         "anim": { "float": 0.01 }

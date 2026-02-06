@@ -505,6 +505,7 @@ async function main() {
     if (!layer || !layer.type || !layer.src) continue;
 
     if (layer.type === "image") addImageLayer(anchor, layer);
+    else if (layer.type === "gif") addImageLayer(anchor, layer);
     else if (layer.type === "model") addModelLayer(anchor, layer);
     else if (layer.type === "video") addVideoLayer(anchor, layer);
   }
