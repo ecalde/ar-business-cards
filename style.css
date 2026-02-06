@@ -1,38 +1,12 @@
 html, body {
   margin: 0;
   height: 100%;
-  background: transparent;
+  background: #000;
   overflow: hidden;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
 }
 
-a-scene, canvas {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* MindAR camera video element (Safari/iOS) */
-video {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  z-index: 0 !important;
-}
-
-/* A-Frame canvas should render above the video */
-canvas {
-  z-index: 1 !important;
-}
-
-/* UI should be above everything */
-#ui {
-  z-index: 10 !important;
-}
-
+/* Your UI overlay */
 #ui {
   position: fixed;
   inset: 0;
@@ -41,7 +15,7 @@ canvas {
   align-items: flex-end;
   justify-content: center;
   padding: 16px;
-  z-index: 10;
+  z-index: 20; /* above everything */
 }
 
 .panel {
@@ -94,4 +68,46 @@ button:disabled {
   font-size: 12px;
   opacity: 0.75;
   line-height: 1.35;
+}
+
+/* MindAR built-in UI */
+.mindar-ui-overlay,
+.mindar-ui-scanning,
+.mindar-ui-loading {
+  z-index: 10 !important; /* below your panel but above camera/canvas */
+}
+
+/* Make scene fill screen */
+a-scene {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+}
+
+/* A-Frame WebGL canvas should be above the camera video */
+canvas.a-canvas {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 2 !important;
+  -webkit-transform: translateZ(1px) !important;
+  transform: translateZ(1px) !important;
+}
+
+/* iOS Safari fix: video z-index bugs unless it participates in a 3D stacking context */
+/* Camera video (MindAR) should be behind the canvas */
+video {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  z-index: 0 !important;
+
+  /* iOS Safari compositing nudges */
+  -webkit-transform-style: preserve-3d !important;
+  -webkit-transform: translateZ(0) !important;
+  transform: translateZ(0) !important;
+  opacity: 0.999 !important;
 }

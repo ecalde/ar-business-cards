@@ -43,26 +43,23 @@
   </div>
 
   <!-- AR Scene -->
-    <a-scene
-    background="transparent: true"
-    mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiScanning: yes; uiLoading: yes;"
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights: true; alpha: true"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
-    >
-    <a-assets id="assets"></a-assets>
+<a-scene
+  embedded
+  background="transparent: true"
+  mindar-image="imageTargetSrc: targets.mind; autoStart: false; uiScanning: yes; uiLoading: yes;"
+  renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true;"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+>
+  <a-assets id="assets"></a-assets>
 
-    <!-- Camera -->
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Anchor for EC logo target (targetIndex 0) -->
-    <a-entity id="anchor" mindar-image-target="targetIndex: 0"></a-entity>
+  <a-entity id="anchor" mindar-image-target="targetIndex: 0"></a-entity>
 
-    <!-- Light (helps GLB models look better) -->
-    <a-entity light="type: ambient; intensity: 0.8"></a-entity>
-    <a-entity light="type: directional; intensity: 0.6" position="1 2 1"></a-entity>
-  </a-scene>
+  <a-entity light="type: ambient; intensity: 0.8"></a-entity>
+  <a-entity light="type: directional; intensity: 0.6" position="1 2 1"></a-entity>
+</a-scene>
 
   <script src="main.js"></script>
 </body>

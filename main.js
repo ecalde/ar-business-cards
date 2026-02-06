@@ -21,6 +21,145 @@ function setStatus(msg) {
   $("status").textContent = msg;
 }
 
+function getMindarCameraVideo() {
+  // MindAR camera video is the one with a srcObject (live camera stream)
+  const videos = Array.from(document.querySelectorAll("video"));
+  return videos.find(v => v.srcObject) || null;
+}
+
+function iosForceCanvasAboveCamera(sceneEl) {
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries++;
+
+    const camVideo = getMindarCameraVideo();
+    const canvas = sceneEl?.renderer?.domElement || document.querySelector("canvas.a-canvas");
+
+    if (!camVideo || !canvas) {
+      if (tries > 40) clearInterval(timer);
+      return;
+    }
+
+    // Put camera video behind everything
+    camVideo.style.position = "fixed";
+    camVideo.style.inset = "0";
+    camVideo.style.width = "100%";
+    camVideo.style.height = "100%";
+    camVideo.style.objectFit = "cover";
+    camVideo.style.zIndex = "0";
+
+    // iOS Safari compositor tricks
+    camVideo.style.opacity = "0.999";
+    camVideo.style.webkitTransform = "translateZ(0)";
+    camVideo.style.transform = "translateZ(0)";
+
+    // Put canvas above the video
+    canvas.style.position = "fixed";
+    canvas.style.inset = "0";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    canvas.style.zIndex = "2";
+    canvas.style.webkitTransform = "translateZ(1px)";
+    canvas.style.transform = "translateZ(1px)";
+
+    clearInterval(timer);
+  }, 100);
+}
+
+
+function bringCanvasAboveVideoSafariHack() {
+  let n = 0;
+  const t = setInterval(() => {
+    n++;
+
+    const video = document.querySelector("video");
+    const aCanvas = document.querySelector(".a-canvas");
+    const canvas = document.querySelector("canvas");
+
+    // Wait until both exist
+    if (!video || !aCanvas || !canvas) {
+      if (n >= 40) clearInterval(t);
+      return;
+    }
+
+    // iOS Safari compositing hacks:
+    // 1) "de-specialize" the video layer so z-index/stacking behaves
+    video.style.opacity = "0.99";                 // IMPORTANT iOS trick
+    video.style.webkitTransform = "translateZ(0)";
+    video.style.transform = "translateZ(0)";
+    video.style.position = "fixed";
+    video.style.inset = "0";
+    video.style.width = "100%";
+    video.style.height = "100%";
+    video.style.objectFit = "cover";
+    video.style.zIndex = "0";
+
+    // 2) Force the canvas above
+    aCanvas.style.position = "fixed";
+    aCanvas.style.inset = "0";
+    aCanvas.style.zIndex = "2";
+    aCanvas.style.webkitTransform = "translateZ(1px)";
+    aCanvas.style.transform = "translateZ(1px)";
+
+    canvas.style.position = "fixed";
+    canvas.style.inset = "0";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    canvas.style.zIndex = "3";
+    canvas.style.webkitTransform = "translateZ(2px)";
+    canvas.style.transform = "translateZ(2px)";
+
+    // 3) DOM order: put video first, then canvas wrapper, so canvas paints last
+    // (Safari sometimes respects DOM order more than z-index for video layers.)
+    if (video.parentElement !== document.body) document.body.appendChild(video);
+    document.body.appendChild(aCanvas);
+
+    clearInterval(t);
+  }, 100);
+}
+
+
+function forceIosLayerOrder() {
+  // Run a few times because iOS/Safari + A-Frame can recreate elements after start()
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries += 1;
+
+    const video = document.querySelector("video");           // MindAR camera
+    const canvas = document.querySelector("canvas");         // A-Frame WebGL
+    const aCanvas = document.querySelector(".a-canvas");     // A-Frame wrapper
+
+    if (video) {
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      video.style.position = "fixed";
+      video.style.inset = "0";
+      video.style.width = "100%";
+      video.style.height = "100%";
+      video.style.objectFit = "cover";
+      video.style.zIndex = "0";
+    }
+
+    if (aCanvas) {
+      aCanvas.style.position = "fixed";
+      aCanvas.style.inset = "0";
+      aCanvas.style.zIndex = "1";
+    }
+
+    if (canvas) {
+      canvas.style.position = "fixed";
+      canvas.style.inset = "0";
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+      canvas.style.zIndex = "2";
+    }
+
+    // After a few tries, stop
+    if (tries >= 15) clearInterval(timer);
+  }, 150);
+}
+
+
 function clampLayers(layers) {
   if (!Array.isArray(layers)) return [];
   return layers.slice(0, MAX_LAYERS);
@@ -53,10 +192,44 @@ AFRAME.registerComponent("layer-anim", {
   }
 });
 
+AFRAME.registerComponent("always-on-top", {
+  init() {
+    this.apply = this.apply.bind(this);
+    this.el.addEventListener("model-loaded", this.apply);
+    // Apply soon for non-model entities too
+    setTimeout(this.apply, 0);
+  },
+  apply() {
+    const obj = this.el.object3D;
+    obj.renderOrder = 999;
+
+    obj.traverse((node) => {
+      if (!node.isMesh) return;
+
+      node.renderOrder = 999;
+
+      const mat = node.material;
+      const mats = Array.isArray(mat) ? mat : [mat];
+
+      for (const m of mats) {
+        if (!m) continue;
+        m.depthTest = false;
+        m.depthWrite = false;
+        m.transparent = true;
+        m.needsUpdate = true;
+      }
+    });
+  },
+  remove() {
+    this.el.removeEventListener("model-loaded", this.apply);
+  }
+});
+
+
 function makeEntityCommon(layer) {
   const e = document.createElement("a-entity");
 
-  const [x, y, z] = layer.pos || [0, 0, 0.12];
+  const [x, y, z] = layer.pos || [0, 0, -0.12];
   e.setAttribute("position", `${x} ${y} ${z}`);
 
   const [sx, sy, sz] = layer.scale || [0.2, 0.2, 0.2];
@@ -69,20 +242,33 @@ function makeEntityCommon(layer) {
     e.setAttribute("layer-anim", `float: ${floatAmp}; spinY: ${spinY}`);
   }
 
+  e.setAttribute("always-on-top", "");
+
   return e;
 }
 
 function addImageLayer(anchor, layer) {
-  // Use a plane with a transparent PNG texture
   const e = makeEntityCommon(layer);
 
   const plane = document.createElement("a-plane");
-  plane.setAttribute("material", `src: url(${layer.src}); transparent: true;`);
+  plane.setAttribute(
+    "material",
+    `shader: flat; src: url(${layer.src}); transparent: true; depthTest: false; depthWrite: false;`
+  );
+  plane.setAttribute("side", "double");
   plane.setAttribute("rotation", "0 0 0");
 
-  // For image layers, scale usually controls plane size better than entity scale,
-  // so keep plane at 1x1 and scale entity to desired size.
   e.appendChild(plane);
+
+  // DEBUG: big red box to confirm rendering
+  const box = document.createElement("a-box");
+  box.setAttribute("depth", "0.02");
+  box.setAttribute("height", "0.15");
+  box.setAttribute("width", "0.15");
+  box.setAttribute("material", "shader: flat; color: #ff0000; depthTest: false; depthWrite: false;");
+  box.setAttribute("position", "0 0 0");
+  e.appendChild(box);
+
   anchor.appendChild(e);
 }
 
@@ -92,6 +278,8 @@ function addModelLayer(anchor, layer) {
   const model = document.createElement("a-gltf-model");
   model.setAttribute("src", layer.src);
   e.appendChild(model);
+
+  model.setAttribute("animation-mixer", ""); // optional if you use animations
 
   anchor.appendChild(e);
 }
@@ -122,7 +310,9 @@ function addVideoLayer(anchor, layer) {
   const vidId = ensureVideoAsset(layer);
 
   const plane = document.createElement("a-plane");
-  plane.setAttribute("material", `src: #${vidId};`);
+  plane.setAttribute("material", `shader: flat; src: #${vidId}; depthTest: false; depthWrite: false;`);
+  plane.setAttribute("side", "double");
+
   e.appendChild(plane);
 
   anchor.appendChild(e);
@@ -164,6 +354,8 @@ async function main() {
   // MindAR scene + controls
   const sceneEl = document.querySelector("a-scene");
   const anchor = $("anchor");
+  anchor.addEventListener("targetFound", () => setStatus("Target found ✅"));
+  anchor.addEventListener("targetLost", () => setStatus("Target lost…"));
   const startBtn = $("startBtn");
   const stopBtn = $("stopBtn");
   const videoBtn = $("videoBtn");
@@ -193,6 +385,7 @@ async function main() {
 
     try {
       await mindarSystem.start();
+      iosForceCanvasAboveCamera(sceneEl);
       startBtn.disabled = true;
       stopBtn.disabled = false;
       setStatus("AR started. Point at the EC logo.");
