@@ -1,5 +1,6 @@
 const DEFAULT_CARD_ID = "card_001";
 const MAX_LAYERS = 5;
+const spawnedEntities = [];
 
 function $(id) {
   return document.getElementById(id);
@@ -266,6 +267,7 @@ function addImageLayer(anchor, layer) {
 
   e.appendChild(plane);
   anchor.appendChild(e);
+  spawnedEntities.push(e);
 }
 
 function addModelLayer(anchor, layer) {
@@ -278,6 +280,7 @@ function addModelLayer(anchor, layer) {
   model.setAttribute("animation-mixer", ""); // optional if you use animations
 
   anchor.appendChild(e);
+  spawnedEntities.push(e);
 }
 
 function ensureVideoAsset(layer) {
@@ -312,11 +315,54 @@ function addVideoLayer(anchor, layer) {
   e.appendChild(plane);
 
   anchor.appendChild(e);
+  spawnedEntities.push(e);
 }
 
 function clearAnchor(anchor) {
   // Remove all children (previous layers)
   while (anchor.firstChild) anchor.removeChild(anchor.firstChild);
+}
+
+function setAnchorVisible(anchor, isVisible) {
+  if (!anchor || !anchor.object3D) return;
+  anchor.object3D.visible = isVisible;
+}
+
+function hideAllOverlaysAndReset(anchor) {
+  // Hide the anchor itself (hides all children)
+  setAnchorVisible(anchor, false);
+
+  // Also explicitly hide spawned overlay entities (extra safety)
+  for (const el of spawnedEntities) {
+    if (!el || !el.object3D) continue;
+    el.object3D.visible = false;
+
+    // If entity uses a video texture, reset the underlying <video>
+    const mat = el.getAttribute && el.getAttribute("material");
+    if (mat?.src && typeof mat.src === "string" && mat.src.startsWith("#")) {
+      const vid = document.querySelector(mat.src);
+      if (vid && vid.tagName === "VIDEO") {
+        vid.pause();
+        vid.currentTime = 0;
+        vid.muted = true;
+      }
+    }
+  }
+
+  // Also reset any <a-assets> videos (covers cases where material isn't found)
+  const vids = document.querySelectorAll("a-assets video");
+  for (const v of vids) {
+    try {
+      v.pause();
+      v.currentTime = 0;
+      v.muted = true;
+    } catch {}
+  }
+}
+
+function showScene(sceneEl, show) {
+  // Hide/show the WebGL output to prevent “frozen overlay” frames
+  sceneEl.style.display = show ? "block" : "none";
 }
 
 function showVideoButtonIfNeeded(layers) {
@@ -350,8 +396,20 @@ async function main() {
   // MindAR scene + controls
   const sceneEl = document.querySelector("a-scene");
   const anchor = $("anchor");
-  anchor.addEventListener("targetFound", () => setStatus("Target found ✅"));
-  anchor.addEventListener("targetLost", () => setStatus("Target lost…"));
+  anchor.addEventListener("targetFound", () => {
+  setStatus("Target found ✅");
+  setAnchorVisible(anchor, true);
+  // Show all spawned overlays
+  for (const el of spawnedEntities) {
+    if (el?.object3D) el.object3D.visible = true;
+  }
+  });
+
+  anchor.addEventListener("targetLost", () => {
+    setStatus("Target lost…");
+    hideAllOverlaysAndReset(anchor);
+  });
+
   const startBtn = $("startBtn");
   const stopBtn = $("stopBtn");
   const videoBtn = $("videoBtn");
@@ -371,6 +429,7 @@ async function main() {
 
   // Build layers now (they’ll show once the target is detected)
   clearAnchor(anchor);
+  spawnedEntities.length = 0;
 
   for (const layer of layers) {
     if (!layer || !layer.type || !layer.src) continue;
@@ -393,11 +452,16 @@ async function main() {
     }
 
     try {
+      showScene(sceneEl, true);          // show WebGL output
+      hideAllOverlaysAndReset(anchor);   // keep overlays hidden until targetFound
+      
       await mindarSystem.start();
+      
       /* Wait for renderer to exist and then force layering */
       iosForceCanvasAboveCamera(sceneEl);
       /* Also run again shortly after start (iOS sometimes re-stacks once) */
       setTimeout(() => iosForceCanvasAboveCamera(sceneEl), 300);
+      
       startBtn.disabled = true;
       stopBtn.disabled = false;
       setStatus("AR started. Point at the EC logo.");
@@ -410,11 +474,21 @@ async function main() {
   stopBtn.addEventListener("click", async () => {
     const mindarSystem = sceneEl.systems["mindar-image-system"];
     if (!mindarSystem) return;
+
+    // 1) Hide overlays immediately
+    hideAllOverlaysAndReset(anchor);
+
+    // 2) Stop camera tracking
     await mindarSystem.stop();
+
+    // 3) Hide the entire WebGL canvas output so no frozen frame remains
+    showScene(sceneEl, false);
+
     startBtn.disabled = false;
     stopBtn.disabled = true;
     setStatus("Stopped. Tap Start AR to run again.");
   });
+
 
   // iOS often requires a user gesture to start video playback
   videoBtn.addEventListener("click", async () => {
