@@ -253,15 +253,25 @@ function makeEntityCommon(layer) {
 
 function addImageLayer(anchor, layer) {
   const e = makeEntityCommon(layer);
-
   const plane = document.createElement("a-plane");
 
-  // Disable fallback color + mipmap artifacts
-  const bust = Date.now(); // simple cache-buster
-  plane.setAttribute(
-    "material",
-    `src: url(${layer.src}?v=${bust}); transparent: true; alphaTest: 0.01; side: double; color: #fff; shader: flat;`
-  );
+  const isGif = layer.type === "gif" || (layer.src || "").toLowerCase().endsWith(".gif");
+
+  if (isGif) {
+    const imgId = ensureImageAsset(layer);
+    plane.setAttribute(
+      "material",
+      `src: #${imgId}; transparent: true; alphaTest: 0.01; side: double; color: #fff; shader: flat;`
+    );
+  } else {
+    // Keep your cache-buster for PNG/JPG
+    const bust = Date.now();
+    plane.setAttribute(
+      "material",
+      `src: url(${layer.src}?v=${bust}); transparent: true; alphaTest: 0.01; side: double; color: #fff; shader: flat;`
+    );
+  }
+
   plane.setAttribute("side", "double");
   plane.setAttribute("rotation", "0 0 0");
 
@@ -301,6 +311,23 @@ function ensureVideoAsset(layer) {
 
   assets.appendChild(v);
   return vidId;
+}
+
+function ensureImageAsset(layer) {
+  const assets = $("assets");
+  const imgId = `img_${btoa(layer.src).replace(/=/g, "")}`;
+
+  if ($(imgId)) return imgId;
+
+  const img = document.createElement("img");
+  img.id = imgId;
+  img.src = layer.src;
+
+  // Helpful when hosting on GitHub Pages
+  img.crossOrigin = "anonymous";
+
+  assets.appendChild(img);
+  return imgId;
 }
 
 function addVideoLayer(anchor, layer) {
