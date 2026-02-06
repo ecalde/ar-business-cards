@@ -254,10 +254,16 @@ function addImageLayer(anchor, layer) {
   const e = makeEntityCommon(layer);
 
   const plane = document.createElement("a-plane");
-  plane.setAttribute(
-    "material",
-    `shader: flat; src: url(${layer.src}); transparent: true; depthTest: false; depthWrite: false;`
-  );
+
+  // Disable fallback color + mipmap artifacts
+  plane.setAttribute("material", `
+    src: url(${layer.src});
+    transparent: true;
+    alphaTest: 0.01;
+    side: double;
+    color: #ffffff;
+    shader: flat;
+  `);
   plane.setAttribute("side", "double");
   plane.setAttribute("rotation", "0 0 0");
 
