@@ -226,17 +226,6 @@ AFRAME.registerComponent("always-on-top", {
   }
 });
 
-AFRAME.registerComponent("gif-texture-refresh", {
-  tick() {
-    const mesh = this.el.getObject3D("mesh");
-    if (!mesh) return;
-
-    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    for (const m of mats) {
-      if (m?.map) m.map.needsUpdate = true;
-    }
-  }
-});
 
 function makeEntityCommon(layer) {
   const e = document.createElement("a-entity");
@@ -274,7 +263,6 @@ function addImageLayer(anchor, layer) {
       "material",
       `src: #${imgId}; transparent: true; alphaTest: 0.01; side: double; color: #fff; shader: flat;`
     );
-    plane.setAttribute("gif-texture-refresh", "");
   } else {
     // Keep your cache-buster for PNG/JPG
     const bust = Date.now();
