@@ -84,8 +84,9 @@ a-scene {
   z-index: 1 !important;
 }
 
-/* A-Frame WebGL canvas should be above the camera video */
-canvas.a-canvas {
+/* A-Frame sometimes uses a wrapper DIV (.a-canvas) plus a plain canvas */
+.a-canvas,
+canvas {
   position: fixed !important;
   inset: 0 !important;
   width: 100% !important;
@@ -95,8 +96,7 @@ canvas.a-canvas {
   transform: translateZ(1px) !important;
 }
 
-/* iOS Safari fix: video z-index bugs unless it participates in a 3D stacking context */
-/* Camera video (MindAR) should be behind the canvas */
+/* Camera video should be behind the WebGL canvas */
 video {
   position: fixed !important;
   inset: 0 !important;
@@ -105,9 +105,8 @@ video {
   object-fit: cover !important;
   z-index: 0 !important;
 
-  /* iOS Safari compositing nudges */
-  -webkit-transform-style: preserve-3d !important;
+  /* iOS Safari compositor nudges */
+  opacity: 0.999 !important;
   -webkit-transform: translateZ(0) !important;
   transform: translateZ(0) !important;
-  opacity: 0.999 !important;
 }

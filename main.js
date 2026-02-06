@@ -363,6 +363,19 @@ async function main() {
   const stopBtn = $("stopBtn");
   const videoBtn = $("videoBtn");
 
+  // iOS Safari sometimes re-stacks the camera/video vs WebGL canvas
+  // exactly when a target is found (scanning -> tracking).
+  anchor.addEventListener("targetFound", () => {
+    iosForceCanvasAboveCamera(sceneEl);
+    setTimeout(() => iosForceCanvasAboveCamera(sceneEl), 150);
+  });
+
+  anchor.addEventListener("targetLost", () => {
+    // Optional: keep status updates so you can confirm events are firing
+    // setStatus("Target lost…");
+  });
+
+
   // Build layers now (they’ll show once the target is detected)
   clearAnchor(anchor);
 
@@ -388,7 +401,10 @@ async function main() {
 
     try {
       await mindarSystem.start();
+      /* Wait for renderer to exist and then force layering */
       iosForceCanvasAboveCamera(sceneEl);
+      /* Also run again shortly after start (iOS sometimes re-stacks once) */
+      setTimeout(() => iosForceCanvasAboveCamera(sceneEl), 300);
       startBtn.disabled = true;
       stopBtn.disabled = false;
       setStatus("AR started. Point at the EC logo.");
