@@ -360,36 +360,79 @@ function hideAllOverlaysAndReset(anchor) {
   }
 }
 
-function showScene(sceneEl, show) {
-  // Hide/show the WebGL output to prevent “frozen overlay” frames
-  const aCanvas = document.querySelector(".a-canvas"); // A-Frame wrapper
-  const canvas =
-    (sceneEl?.renderer?.domElement) ||
-    document.querySelector("canvas.a-canvas") ||
-    document.querySelector("canvas");
+function getAllAFrameCanvasEls(sceneEl) {
+  const list = [];
 
-  if (aCanvas) aCanvas.style.display = show ? "block" : "none";
-  if (canvas) canvas.style.display = show ? "block" : "none";
+  // A-Frame wrapper + its WebGL canvas
+  const aCanvas = document.querySelector(".a-canvas");
+  if (aCanvas) list.push(aCanvas);
 
-  // Keep scene itself consistent too (not strictly required, but fine)
-  sceneEl.style.display = show ? "block" : "none";
+  // Renderer canvas (best source of truth)
+  const rendererCanvas = sceneEl?.renderer?.domElement;
+  if (rendererCanvas) list.push(rendererCanvas);
 
-  // When hiding, force-clear the WebGL buffer so Safari doesn't “cache” the last frame
-  if (!show && canvas) {
-    try {
-      const gl =
-        canvas.getContext("webgl2", { preserveDrawingBuffer: false }) ||
-        canvas.getContext("webgl", { preserveDrawingBuffer: false });
+  // Fallback canvases (sometimes multiple exist)
+  document.querySelectorAll("canvas").forEach(c => list.push(c));
 
-      if (gl) {
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
-      }
-    } catch (e) {
-      // ignore
-    }
+  // Dedup
+  return Array.from(new Set(list));
+}
+
+function forceHideElement(el, hide) {
+  if (!el) return;
+
+  if (hide) {
+    el.style.visibility = "hidden";
+    el.style.opacity = "0";
+    el.style.pointerEvents = "none";
+    // keep in DOM but invisible (more reliable than display:none on iOS)
+  } else {
+    el.style.visibility = "visible";
+    el.style.opacity = "1";
+    el.style.pointerEvents = "auto";
   }
 }
+
+function clearWebGLCanvas(sceneEl) {
+  const canvas = sceneEl?.renderer?.domElement;
+  if (!canvas) return;
+
+  try {
+    const gl =
+      canvas.getContext("webgl2") ||
+      canvas.getContext("webgl") ||
+      canvas.getContext("experimental-webgl");
+
+    if (!gl) return;
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+  } catch {
+    // ignore
+  }
+}
+
+function showScene(sceneEl, show) {
+  // 1) If hiding: force one blank clear first
+  if (!show) {
+    // Try to clear the current frame buffer
+    clearWebGLCanvas(sceneEl);
+
+    // Ask A-Frame to render once more (blank frame tends to replace frozen one)
+    try {
+      sceneEl?.renderer?.render(sceneEl.object3D, sceneEl.camera);
+    } catch {}
+  }
+
+  // 2) Hard-hide or show ALL canvas-related elements
+  const canvases = getAllAFrameCanvasEls(sceneEl);
+  for (const el of canvases) forceHideElement(el, !show);
+
+  // 3) Also hide/show the scene root (fine to keep)
+  forceHideElement(sceneEl, !show);
+}
+
 
 
 function showVideoButtonIfNeeded(layers) {
@@ -506,21 +549,24 @@ async function main() {
     const mindarSystem = sceneEl.systems["mindar-image-system"];
     if (!mindarSystem) return;
 
-    // 1) Hide overlays immediately
+    // Hide overlays immediately
     hideAllOverlaysAndReset(anchor);
 
-    // 2) Stop camera tracking
+    setAnchorVisible(anchor, false);
+    // Stop camera tracking
     await mindarSystem.stop();
 
-    // 3) Hide the entire WebGL canvas output so no frozen frame remains
+    // Hide and clear the WebGL output (prevents frozen AR overlay)
     showScene(sceneEl, false);
-    setTimeout(() => showScene(sceneEl, false), 100);
+
+    // Extra: Safari sometimes reapplies styles after stop—re-hide again
+    setTimeout(() => showScene(sceneEl, false), 50);
+    setTimeout(() => showScene(sceneEl, false), 250);
 
     startBtn.disabled = false;
     stopBtn.disabled = true;
     setStatus("Stopped. Tap Start AR to run again.");
   });
-
 
   // iOS often requires a user gesture to start video playback
   videoBtn.addEventListener("click", async () => {
