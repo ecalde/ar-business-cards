@@ -1,6 +1,5 @@
 {
   "card_001": {
-    "targetIndex": 0,
     "instagramUrl": "https://www.instagram.com/edwinspira/",
     "layers": [
       {
@@ -14,7 +13,6 @@
   },
 
   "card_002": {
-    "targetIndex": 1,
     "instagramUrl": "https://www.instagram.com/edwinspira/",
     "layers": [
       {
