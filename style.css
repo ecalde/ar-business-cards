@@ -110,3 +110,8 @@ video {
   -webkit-transform: translateZ(0) !important;
   transform: translateZ(0) !important;
 }
+
+/* Failsafe: hide any debug overlays that might be injected */
+.mindar-ui-debug, .mindar-ui-marker, .mindar-ui-target {
+  display: none !important;
+}
