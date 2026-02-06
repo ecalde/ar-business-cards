@@ -1,9 +1,10 @@
 {
   "card_001": {
+    "targetIndex": 0,
     "instagramUrl": "https://www.instagram.com/edwinspira/",
     "layers": [
       {
-        "type": "png",
+        "type": "image",
         "src": "assets/overlays/placeholder.png",
         "pos": [0.0, 0.0, 0.1],   
         "scale": [0.7, 0.4, 1.0],
@@ -13,6 +14,7 @@
   },
 
   "card_002": {
+    "targetIndex": 1,
     "instagramUrl": "https://www.instagram.com/edwinspira/",
     "layers": [
       {

@@ -232,7 +232,6 @@ function makeEntityCommon(layer) {
 
   const [x, y, z] = layer.pos || [0, 0, -0.12];
   e.setAttribute("position", `${x} ${y} ${z}`);
-
   const [sx, sy, sz] = layer.scale || [0.2, 0.2, 0.2];
   e.setAttribute("scale", `${sx} ${sy} ${sz}`);
 
@@ -484,22 +483,28 @@ async function main() {
     throw new Error("cards.json must include at least the default card config.");
   }
 
+  // MindAR scene + anchor (DECLARE ONCE)
+  const sceneEl = document.querySelector("a-scene");
+  const anchor = $("anchor");
+
+  // Use per-card targetIndex (this is the important part)
+  const targetIndex = Number.isFinite(chosen.targetIndex) ? chosen.targetIndex : 0;
+  anchor.setAttribute("mindar-image-target", `targetIndex: ${targetIndex}`);
+
   // Set Instagram link for this card
   $("igBtn").href = chosen.instagramUrl || "https://instagram.com/";
 
   const layers = clampLayers(chosen.layers || []);
   showVideoButtonIfNeeded(layers);
 
-  // MindAR scene + controls
-  const sceneEl = document.querySelector("a-scene");
-  const anchor = $("anchor");
   anchor.addEventListener("targetFound", () => {
-  setStatus("Target found ✅");
-  setAnchorVisible(anchor, true);
-  // Show all spawned overlays
-  for (const el of spawnedEntities) {
-    if (el?.object3D) el.object3D.visible = true;
-  }
+    setStatus("Target found ✅");
+    setAnchorVisible(anchor, true);
+    for (const el of spawnedEntities) {
+      if (el?.object3D) el.object3D.visible = true;
+    }
+    iosForceCanvasAboveCamera(sceneEl);
+    setTimeout(() => iosForceCanvasAboveCamera(sceneEl), 150);
   });
 
   anchor.addEventListener("targetLost", () => {
@@ -511,20 +516,7 @@ async function main() {
   const stopBtn = $("stopBtn");
   const videoBtn = $("videoBtn");
 
-  // iOS Safari sometimes re-stacks the camera/video vs WebGL canvas
-  // exactly when a target is found (scanning -> tracking).
-  anchor.addEventListener("targetFound", () => {
-    iosForceCanvasAboveCamera(sceneEl);
-    setTimeout(() => iosForceCanvasAboveCamera(sceneEl), 150);
-  });
-
-  anchor.addEventListener("targetLost", () => {
-    // Optional: keep status updates so you can confirm events are firing
-    // setStatus("Target lost…");
-  });
-
-
-  // Build layers now (they’ll show once the target is detected)
+  // Build layers now
   clearAnchor(anchor);
   spawnedEntities.length = 0;
 
@@ -532,7 +524,7 @@ async function main() {
     if (!layer || !layer.type || !layer.src) continue;
 
     if (layer.type === "image") addImageLayer(anchor, layer);
-    else if (layer.type === "gif") addImageLayer(anchor, layer);
+    else if (layer.type === "gif") addImageLayer(anchor, layer); // note: gif will NOT animate as a texture
     else if (layer.type === "model") addModelLayer(anchor, layer);
     else if (layer.type === "video") addVideoLayer(anchor, layer);
   }
@@ -542,11 +534,9 @@ async function main() {
   hideAllOverlaysAndReset(anchor);
   setAnchorVisible(anchor, false);
 
-
   startBtn.addEventListener("click", async () => {
     setStatus("Starting AR…");
 
-    // MindAR system is available after scene loads
     const mindarSystem = sceneEl.systems["mindar-image-system"];
     if (!mindarSystem) {
       setStatus("MindAR not ready yet. Try again in a moment.");
@@ -554,16 +544,14 @@ async function main() {
     }
 
     try {
-      showScene(sceneEl, true);          // show WebGL output
-      hideAllOverlaysAndReset(anchor);   // keep overlays hidden until targetFound
-      
+      showScene(sceneEl, true);
+      hideAllOverlaysAndReset(anchor);
+
       await mindarSystem.start();
-      
-      /* Wait for renderer to exist and then force layering */
+
       iosForceCanvasAboveCamera(sceneEl);
-      /* Also run again shortly after start (iOS sometimes re-stacks once) */
       setTimeout(() => iosForceCanvasAboveCamera(sceneEl), 300);
-      
+
       startBtn.disabled = true;
       stopBtn.disabled = false;
       setStatus("AR started. Point at the EC logo.");
@@ -577,17 +565,12 @@ async function main() {
     const mindarSystem = sceneEl.systems["mindar-image-system"];
     if (!mindarSystem) return;
 
-    // Hide overlays immediately
     hideAllOverlaysAndReset(anchor);
-
     setAnchorVisible(anchor, false);
-    // Stop camera tracking
+
     await mindarSystem.stop();
 
-    // Hide and clear the WebGL output (prevents frozen AR overlay)
     showScene(sceneEl, false);
-
-    // Extra: Safari sometimes reapplies styles after stop—re-hide again
     setTimeout(() => showScene(sceneEl, false), 50);
     setTimeout(() => showScene(sceneEl, false), 250);
 
@@ -596,13 +579,11 @@ async function main() {
     setStatus("Stopped. Tap Start AR to run again.");
   });
 
-  // iOS often requires a user gesture to start video playback
   videoBtn.addEventListener("click", async () => {
-    // Play all video assets we created
     const vids = document.querySelectorAll("a-assets video");
     for (const v of vids) {
       try {
-        v.muted = false; // if sound, keep this false, but iOS may block without further steps
+        v.muted = false;
         await v.play();
       } catch (e) {
         console.warn("Video play blocked:", e);
