@@ -5,9 +5,9 @@
       {
         "type": "image",
         "src": "assets/overlays/placeholder.png",
-        "pos": [0.0, 0.03, 0.12],   
+        "pos": [1.0, 1.0, 0.12],   
         "scale": [0.35, 0.20, 1.0],
-        "anim": { "float": 0.0 }
+        "anim": { "float": 0.01 }
       }
     ]
   },
