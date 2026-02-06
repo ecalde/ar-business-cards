@@ -265,16 +265,6 @@ function addImageLayer(anchor, layer) {
   plane.setAttribute("rotation", "0 0 0");
 
   e.appendChild(plane);
-
-  // DEBUG: big red box to confirm rendering
-  const box = document.createElement("a-box");
-  box.setAttribute("depth", "0.02");
-  box.setAttribute("height", "0.15");
-  box.setAttribute("width", "0.15");
-  box.setAttribute("material", "shader: flat; color: #ff0000; depthTest: false; depthWrite: false;");
-  box.setAttribute("position", "0 0 0");
-  e.appendChild(box);
-
   anchor.appendChild(e);
 }
 
