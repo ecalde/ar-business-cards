@@ -237,9 +237,12 @@ function makeEntityCommon(layer) {
 
   const anim = layer.anim || {};
   const floatAmp = Number(anim.float || 0);
-  const spinY = Number(anim.spinY || 0);
-  if (floatAmp || spinY) {
-    e.setAttribute("layer-anim", `float: ${floatAmp}; spinY: ${spinY}`);
+
+  // ❌ Disable spin entirely for now
+  const spinY = 0;
+
+  if (floatAmp) {
+    e.setAttribute("layer-anim", `float: ${floatAmp}; spinY: 0`);
   }
 
   e.setAttribute("always-on-top", "");
