@@ -1,27 +1,30 @@
 {
-  "card_001": {
-    "instagramUrl": "https://www.instagram.com/edwinspira/",
-    "layers": [
-      {
-        "type": "image",
-        "src": "assets/overlays/placeholder.png",
-        "pos": [0.0, 0.0, 0.1],   
-        "scale": [0.7, 0.4, 1.0],
-        "anim": { "float": 0.01 }
-      }
+    "targets": [
+        {
+            "id": "card_001",
+            "instagramUrl": "https://www.instagram.com/edwinspira/",
+            "layers": [
+                {
+                    "type": "image",
+                    "src": "assets/overlays/dog.png",
+                    "pos": [0.0, 0.03, 0.12],
+                    "scale": [0.38, 0.22, 1.0],
+                    "anim": { "float": 0.006 }
+                }
+            ]
+        },
+        {
+            "id": "card_002",
+            "instagramUrl": "https://www.instagram.com/edwinspira/",
+            "layers": [
+                {
+                    "type": "image",
+                    "src": "assets/overlays/dog.png",
+                    "pos": [0.0, 0.03, 0.12],
+                    "scale": [0.38, 0.22, 1.0],
+                    "anim": { "float": 0.006 }
+                }
+            ]
+        }
     ]
-  },
-
-  "card_002": {
-    "instagramUrl": "https://www.instagram.com/edwinspira/",
-    "layers": [
-      {
-        "type": "image",
-        "src": "assets/overlays/dog.png",
-        "pos": [0.0, 0.03, 0.12],
-        "scale": [0.38, 0.22, 1.0],
-        "anim": { "float": 0.006 }
-      }
-    ]
-  }
 }
