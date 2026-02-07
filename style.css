@@ -115,3 +115,37 @@ video {
 .mindar-ui-debug, .mindar-ui-marker, .mindar-ui-target {
   display: none !important;
 }
+
+#splash {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;           /* below UI, above black page */
+  gap: 14px;
+}
+
+#splash img {
+  width: min(70vw, 340px);
+  height: auto;
+}
+
+#splash .splash-text {
+  color: white;
+  opacity: 0.85;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+}
+
+/* optional: fade transitions */
+#splash.fade {
+  transition: opacity 250ms ease;
+}
+#splash.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+

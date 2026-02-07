@@ -22,6 +22,13 @@ function setStatus(msg) {
   $("status").textContent = msg;
 }
 
+function showSplash(show) {
+  const el = document.getElementById("splash");
+  if (!el) return;
+  el.classList.add("fade");
+  el.classList.toggle("hidden", !show);
+}
+
 function waitForSceneLoaded(sceneEl) {
   return new Promise((resolve) => {
     if (!sceneEl) resolve();
@@ -543,6 +550,7 @@ async function main() {
   showVideoButtonIfNeeded(clampLayers(targets[0]?.layers || []));
   setStatus(`Ready. Tap “Start AR”, then point at any card.`);
   showScene(sceneEl, false);
+  showSplash(true);
 
   // Start/Stop AR
   startBtn.addEventListener("click", async () => {
@@ -561,6 +569,7 @@ async function main() {
       for (const a of anchors) setAnchorVisible(a, false);
 
       await mindarSystem.start();
+      showSplash(false);
 
       iosForceCanvasAboveCamera(sceneEl);
       setTimeout(() => iosForceCanvasAboveCamera(sceneEl), 300);
@@ -585,6 +594,7 @@ async function main() {
     activeIndex = null;
 
     await mindarSystem.stop();
+    showSplash(true);
 
     showScene(sceneEl, false);
     setTimeout(() => showScene(sceneEl, false), 50);
