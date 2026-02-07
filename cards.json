@@ -10,6 +10,13 @@
                     "pos": [0.0, 0.03, 0.12],
                     "scale": [0.38, 0.22, 1.0],
                     "anim": { "float": 0.006 }
+                },
+                {
+                    "type": "image",
+                    "src": "assets/overlays/TestPNG.png",
+                    "pos": [0.0, 0.03, 0.52],
+                    "scale": [0.38, 0.22, 1.0],
+                    "anim": { "float": 0.006 }
                 }
             ]
         },
