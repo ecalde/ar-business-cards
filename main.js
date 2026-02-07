@@ -455,8 +455,6 @@ async function main() {
   const config = await loadJSON("cards.json");
   const targets = Array.isArray(config.targets) ? config.targets : [];
   const targetCount = targets.length;
-  console.log("anchorsRoot exists?", !!anchorsRoot, anchorsRoot);
-  console.log("scene children:", sceneEl.children.length);
 
   if (!targetCount) {
     throw new Error("cards.json must include a non-empty targets[] array.");
@@ -476,6 +474,10 @@ async function main() {
     anchorsRoot.id = "anchors";
     sceneEl.appendChild(anchorsRoot);
   }
+
+  console.log("anchorsRoot exists?", !!anchorsRoot, anchorsRoot);
+  console.log("scene children:", sceneEl.children.length);
+
   const startBtn = $("startBtn");
   const stopBtn = $("stopBtn");
   const videoBtn = $("videoBtn");
