@@ -22,6 +22,14 @@ function setStatus(msg) {
   $("status").textContent = msg;
 }
 
+function waitForSceneLoaded(sceneEl) {
+  return new Promise((resolve) => {
+    if (!sceneEl) resolve();
+    else if (sceneEl.hasLoaded) resolve();
+    else sceneEl.addEventListener("loaded", resolve, { once: true });
+  });
+}
+
 function getMindarCameraVideo() {
   // MindAR camera video is the one with a srcObject (live camera stream)
   const videos = Array.from(document.querySelectorAll("video"));
@@ -454,7 +462,18 @@ async function main() {
 
   // MindAR scene + controls
   const sceneEl = document.querySelector("a-scene");
-  const anchorsRoot = $("anchors"); // <-- make sure index.html has <a-entity id="anchors"></a-entity>
+  await waitForSceneLoaded(sceneEl);
+
+  // Try to find anchors container
+  let anchorsRoot = document.getElementById("anchors");
+
+  // If it's missing for ANY reason, create it so we never crash
+  if (!anchorsRoot) {
+    console.warn("Missing #anchors in DOM. Creating it dynamically.");
+    anchorsRoot = document.createElement("a-entity");
+    anchorsRoot.id = "anchors";
+    sceneEl.appendChild(anchorsRoot);
+  }
   const startBtn = $("startBtn");
   const stopBtn = $("stopBtn");
   const videoBtn = $("videoBtn");
